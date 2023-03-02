@@ -14,6 +14,7 @@ DiskStorage::DiskStorage(unsigned int storageSize, unsigned int blockSize)
     this->storagePtr = new unsigned char[storageSize]; // Creates an array of storageSize number of unsigned characters (pointer to each byte in disk)
     this->blockPtr = nullptr;
 
+    this->allocatedRecords = 0;                       // Total number of allocated records
     this->allocatedBlocks = 0;                       // Total number of allocated blocks
     this->availableBlocks = storageSize / blockSize; // Total number of available blocks
     this->currentBlockSpaceUsed = 0;                 // Total space used in current block in bytes
@@ -49,6 +50,64 @@ int DiskStorage::allocateBlock()
     }
 }
 
+
+int DiskStorage::searchNumVotes(unsigned int targetNumVotes)
+{
+    int numBlocksAccessed = 0;
+    int numRecordsFound = 0;
+
+    // Iterate through all allocated blocks
+    for (auto block : blockList)
+    {
+        numBlocksAccessed++;
+
+        // Iterate through all records in the block
+        for (unsigned int offset = 0; offset < blockSize; offset += sizeof(Record))
+        {
+            Record* record = (Record*)(block + offset);
+
+            // If record is not deleted and numVotes matches target value, increment count
+            if (!record->deleted && record->numVotes == targetNumVotes)
+            {
+                numRecordsFound++;
+            }
+        }
+    }
+
+    // cout << "Number of data blocks accessed: " << numBlocksAccessed << endl;
+    // cout << "Number of records found: " << numRecordsFound << endl;
+
+    return numBlocksAccessed;
+}
+
+
+int DiskStorage::searchNumVotesBetween(unsigned int minNumVotes, unsigned int maxNumVotes) {
+    int blocksAccessed = 0;
+    int recordsSearched = 0;
+
+    // Iterate through all allocated blocks
+    for (auto block : blockList) {
+        Record *currentRecord = (Record *)block;
+        int numRecordsInBlock = blockSize / sizeof(Record);
+
+        // Iterate through all records in block
+        for (int i = 0; i < numRecordsInBlock; i++) {
+            if (currentRecord[i].deleted)
+                continue;
+            if (currentRecord[i].numVotes >= minNumVotes && currentRecord[i].numVotes <= maxNumVotes) {
+                // Record matches search criteria
+                recordsSearched++;
+            }
+        }
+        blocksAccessed++;
+    }
+
+    // cout << "Records found: " << recordsSearched << endl;
+    // cout << "Blocks accessed: " << blocksAccessed << endl;
+
+    return blocksAccessed;
+}
+
 // Function to allocate space for a new record in disk storage
 tuple<void *, unsigned int> DiskStorage::allocateRecord(unsigned int recordSize)
 {
@@ -65,9 +124,11 @@ tuple<void *, unsigned int> DiskStorage::allocateRecord(unsigned int recordSize)
 
     tuple<void *, unsigned int> recordAddress(blockPtr, currentBlockSpaceUsed);
 
-    recordList.push_back(blockPtr+currentBlockSpaceUsed);
+    recordList.push_back(blockPtr+currentBlockSpaceUsed); // Add block pointer to the list
 
     currentBlockSpaceUsed += recordSize;
+
+    allocatedRecords += 1;
 
     return recordAddress;
 }
@@ -79,6 +140,7 @@ try
     fill(blockAddress + offset, blockAddress + offset + recordSize, '\0');
     unsigned char *recordAddress = (unsigned char *)(blockAddress + offset);
     recordList.remove(recordAddress);
+    allocatedRecords -= 1;
     return 1;
 }
 

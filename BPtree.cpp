@@ -92,7 +92,7 @@ void BPTree::query(int x, queryResults ** results) {
         Node *cursor = root;
         while (cursor->isLeaf == false) { // traversing in internal nodes
 
-            cursor->printNode(); // prints the keys for the first 5 index nodes
+            // cursor->printNode(); // prints the keys for the first 5 index nodes
             indexesAccessed++;
 
             for (int i=0; i<cursor->size; i++) {
@@ -108,7 +108,7 @@ void BPTree::query(int x, queryResults ** results) {
         }
         
         // in leaf node
-        if (indexesAccessed < 5) cursor->printNode(); // this prints the leaf nodes
+        // if (indexesAccessed < 5) cursor->printNode(); // this prints the leaf nodes
         indexesAccessed++;
 
         queryResults ** temp = results;
@@ -116,7 +116,7 @@ void BPTree::query(int x, queryResults ** results) {
         for (int i=0; i<cursor->size; i++) {
 
             if (x == cursor->keys[i]) {
-                cout << "Key " << cursor->keys[i] << " found\n";
+                // cout << "Key " << cursor->keys[i] << " found\n";
                 // ptr to head of block == cursor->blocks[i]
             
                 bool foundlast = false;
@@ -127,13 +127,14 @@ void BPTree::query(int x, queryResults ** results) {
                     
                     // this prints the first 5 data blocks accessed
                     if (blocksAccessed < 5){
-                        cout << "data block accessed, its tconst values are: ";
+                        // cout << "data block accessed, its tconst values are: ";
                         Record * blk = follow;
                         for (int j = 0; j < max_rec; j++){
                             Record * r = &follow[j];
-                            if (r->deleted == false) cout << r->tconst << " ";
+                            // if (r->deleted == false) 
+                            // cout << r->tconst << " ";
                         }
-                        cout << "\n";
+                        // cout << "\n";
                     }
                     blocksAccessed++;
 
@@ -195,7 +196,7 @@ void BPTree::query(int min, int max, queryResults ** results) {
         Node *cursor = root;
         while (cursor->isLeaf == false) { // traversing in internal nodes
 
-            cursor->printNode(); // prints keys for the first 5 index nodes
+            // cursor->printNode(); // prints keys for the first 5 index nodes
             indexesAccessed++;
 
             for (int i=0; i<cursor->size; i++) {
@@ -211,7 +212,7 @@ void BPTree::query(int min, int max, queryResults ** results) {
         }
         
         // in leaf node
-        if (indexesAccessed < 5) cursor->printNode(); // this prints the leaf nodes
+        // if (indexesAccessed < 5) cursor->printNode(); // this prints the leaf nodes
         indexesAccessed++;
 
         bool queryEnd = false;
@@ -234,18 +235,18 @@ void BPTree::query(int min, int max, queryResults ** results) {
                         
                         // this prints the first 5 data blocks accessed
                         if (blocksAccessed < 5){
-                            cout << "Key " << x << " found\n";
-                            cout << "data block accessed, its tconst values are: ";
+                            // cout << "Key " << x << " found\n";
+                            // cout << "data block accessed, its tconst values are: ";
                             Record * blk = follow;
                             for (int j = 0; j < max_rec; j++){
                                 Record * r = &follow[j];
-                                if (r->deleted == false) cout << r->tconst << " ";
+                                // if (r->deleted == false) cout << r->tconst << " ";
                             }
-                            cout << "\n";
+                            // cout << "\n";
                         }
                         blocksAccessed++;
                         if (blocksAccessed == 6) {
-                            cout << "Remaining keys hidden.\n";
+                            // cout << "Remaining keys hidden.\n";
                         }
 
                         for (int i = 0; i < max_rec; i++){
@@ -345,7 +346,7 @@ void BPTree::displayTree(Node *cursor) {
     if (root == cursor) cout << "(END)\n";
 }
 
-//prints root and first child node
+//prints root nodes
 void BPTree::displayTreeModified(Node *cursor) {
     cout << "[ROOT]\n";
 
@@ -356,18 +357,18 @@ void BPTree::displayTreeModified(Node *cursor) {
         }
         cout << "\n";
 
-        if (cursor->isLeaf == false){
-            cursor = cursor->ptrs[0];
-            if (cursor->isLeaf == false) cout << "FIRST CHILD NODE - [INTERNAL]\n";
-            else cout << "FIRST CHILD NODE - [LEAVES]\n";
-        }
-        else cursor = NULL;
+        // if (cursor->isLeaf == false){
+        //     cursor = cursor->ptrs[0];
+        //     if (cursor->isLeaf == false) cout << "FIRST CHILD NODE - [INTERNAL]\n";
+        //     else cout << "FIRST CHILD NODE - [LEAVES]\n";
+        // }
+        // else cursor = NULL;
 
-        if (cursor != NULL) {
-            for (int i=0; i<cursor->size; i++) {
-                cout << cursor->keys[i] << " "; // print elements in each node
-            }
-        }
+        // if (cursor != NULL) {
+        //     for (int i=0; i<cursor->size; i++) {
+        //         cout << cursor->keys[i] << " "; // print elements in each node
+        //     }
+        // }
     }
     cout << "\n(END)\n";
 }

@@ -29,6 +29,7 @@ private:
     unsigned int storageRecordsUsed;
     unsigned int allocatedBlocks;
     unsigned int availableBlocks;
+    unsigned int allocatedRecords;
     unsigned int currentBlockSpaceUsed;
 
     list<unsigned char*> blockList; // A list to store all block pointers
@@ -40,6 +41,10 @@ public:
     ~DiskStorage();
 
     int allocateBlock();
+
+    int searchNumVotes(unsigned int targetNumVotes);
+
+    int searchNumVotesBetween(unsigned int minNumVotes, unsigned int maxNumVotes);
 
     tuple<void *, unsigned int> allocateRecord(unsigned int recordSize);
 
@@ -60,6 +65,10 @@ public:
 
     unsigned int getallocatedBlocks(){
         return allocatedBlocks;
+    }
+
+    unsigned int getallocatedRecords(){
+        return allocatedRecords;
     }
 
     unsigned int getavailableBlocks(){
