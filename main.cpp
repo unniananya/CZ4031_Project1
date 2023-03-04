@@ -17,8 +17,8 @@ typedef unsigned char uchar;
 
 int main(){
 
-    BPlusTree tree = BPlusTree();
-    PCDiskStorage pcDiskStorage{100000000, blockSize};
+    BPlusTree bplusTree = BPlusTree();
+    PCDiskStorage pcDiskStorage{100000000, sizeOfBlock};
 
     ifstream dataFile("data.tsv");
 
@@ -46,7 +46,7 @@ int main(){
             void *rdAddr = (uchar *)get<0>(data_record) + get<1>(data_record);
             memcpy(rdAddr, &record, sizeof(record));
 
-            tree.insert(record.numVotes, (Record *) get<0>(data_record));
+            bplusTree.insert(record.numVotes, (Record *) get<0>(data_record));
         }
         dataFile.close();
     }
@@ -61,12 +61,12 @@ int main(){
     cout << "\n<------------------- Experiment 2 ------------------->\n";
     cout << "Parameter n of the B+ tree is: " << n << "\n";    
     int numNodes = 0;
-    numNodes = tree.NumNodesTree(tree.getRoot(), numNodes);
+    numNodes = bplusTree.NumNodesTree(bplusTree.getRoot(), numNodes);
     cout << "No. of nodes of the B+ tree: " << numNodes << "\n";
     int level = 0;
-    level = tree.getLevelOfTree();
+    level = bplusTree.getLevelOfTree();
     cout << "No. of levels of the B+ tree: " << level << "\n";
-    tree.showRootNodes(tree.getRoot());
+    bplusTree.showRootNodes(bplusTree.getRoot());
 
     
     
@@ -76,7 +76,7 @@ int main(){
     recordResults * gottenResults = NULL;
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto [nodesAccessed, blocksAccessed] = tree.findNumVotes(searchNode, &gottenResults);
+    auto [nodesAccessed, blocksAccessed] = bplusTree.findNumVotes(searchNode, &gottenResults);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     recordResults *tmpResults = gottenResults;
@@ -108,7 +108,7 @@ int main(){
     gottenResults = NULL;
 
     auto start1 = std::chrono::high_resolution_clock::now();
-    auto [nodesAccessed1, blocksAccessed1] = tree.findNumVotes(searchNodeLow, searchNodeHigh, &gottenResults);
+    auto [nodesAccessed1, blocksAccessed1] = bplusTree.findNumVotes(searchNodeLow, searchNodeHigh, &gottenResults);
     auto end1 = std::chrono::high_resolution_clock::now();
     auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
     std::cout << "Number of index nodes the process accesses: " << nodesAccessed1 << std::endl;
@@ -138,20 +138,20 @@ int main(){
     int deletethis = 1000;
    
     auto start2 = std::chrono::high_resolution_clock::now();
-    tree.deleteKey(deletethis);
+    bplusTree.deleteKey(deletethis);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
 
     int after = 0;
-    after = tree.NumNodesTree(tree.getRoot(), after);
+    after = bplusTree.NumNodesTree(bplusTree.getRoot(), after);
 
     cout << "No. of nodes in updated tree: " << after << "\n"; 
 
     level = 0;
-    level = tree.getLevelOfTree();
+    level = bplusTree.getLevelOfTree();
     cout << "No. of levels in updated B+ tree:  " << level << "\n";
 
-    tree.showRootNodes(tree.getRoot());
+    bplusTree.showRootNodes(bplusTree.getRoot());
 
     std::cout << "Running time of the retrieval process: " << duration2.count() << " microseconds\n";
 

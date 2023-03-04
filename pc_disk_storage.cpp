@@ -4,11 +4,10 @@
 
 using namespace std;
 
-// Constructor
-PCDiskStorage::PCDiskStorage(unsigned int totalSize, unsigned int blockSize)
+PCDiskStorage::PCDiskStorage(unsigned int totalSize, unsigned int sizeOfBlock)
 {
     this->totalSize = totalSize; 
-    this->blockSize = blockSize; 
+    this->sizeOfBlock = sizeOfBlock; 
 
     unsigned char *storagePtr = nullptr;
     this->storagePtr = new unsigned char[totalSize]; 
@@ -16,13 +15,12 @@ PCDiskStorage::PCDiskStorage(unsigned int totalSize, unsigned int blockSize)
 
     this->numAllocatedRecords = 0;                     
     this->numAllocatedBlocks = 0;    
-    this->numAvailableBlocks = totalSize / blockSize;                  
+    this->numAvailableBlocks = totalSize / sizeOfBlock;                  
     this->currentBlockSpaceUsed = 0;   
 
     
 }
 
-// Destructor
 PCDiskStorage::~PCDiskStorage()
 {
     delete storagePtr;
@@ -41,7 +39,7 @@ int PCDiskStorage::searchNumVotes(unsigned int targetNumVotes)
         numBlocksAccessed++;
 
         // Iterate through all records in the block
-        for (unsigned int offset = 0; offset < blockSize; offset += sizeof(Record))
+        for (unsigned int offset = 0; offset < sizeOfBlock; offset += sizeof(Record))
         {
             Record* record = (Record*)(block + offset);
 
@@ -67,7 +65,7 @@ int PCDiskStorage::searchNumVotesBetween(unsigned int minNumVotes, unsigned int 
     // Iterate through all allocated blocks
     for (auto block : blockList) {
         Record *currentRecord = (Record *)block;
-        int numRecordsInBlock = blockSize / sizeof(Record);
+        int numRecordsInBlock = sizeOfBlock / sizeof(Record);
 
         // Iterate through all records in block
         for (int i = 0; i < numRecordsInBlock; i++) {
@@ -108,13 +106,13 @@ catch (exception &e)
 
 tuple<void *, unsigned int> PCDiskStorage::allocateRecord(unsigned int recordSize)
 {
-    if ((numAllocatedBlocks == 0) || (recordSize > (blockSize - currentBlockSpaceUsed))) 
+    if ((numAllocatedBlocks == 0) || (recordSize > (sizeOfBlock - currentBlockSpaceUsed))) 
     {
         if (!allocateBlock())
             throw "All the bloocks have been allocated and there is no more free space in the blocks.";
     }
 
-    if (blockSize < recordSize)
+    if (sizeOfBlock < recordSize)
     {
         throw "We are unable to allocate a record as the record size is biger than the size of the block.";
     }
@@ -133,7 +131,7 @@ int PCDiskStorage::allocateBlock()
 {
     if (numAvailableBlocks > 0)
     {
-        blockPtr = (numAllocatedBlocks * blockSize) + storagePtr; 
+        blockPtr = (numAllocatedBlocks * sizeOfBlock) + storagePtr; 
         numAllocatedBlocks += 1;
 
         blockList.push_back(blockPtr); 

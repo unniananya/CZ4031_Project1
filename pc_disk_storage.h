@@ -6,7 +6,7 @@
 using namespace std;
 
 
-const int blockSize = 200;
+const int sizeOfBlock = 200;
 
 struct Record
 {
@@ -24,7 +24,7 @@ private:
     unsigned char *storagePtr;
 
     unsigned int totalSize;
-    unsigned int blockSize;
+    unsigned int sizeOfBlock;
 
     list<unsigned char*> blockList; 
     list<unsigned char*> recordList;
@@ -35,7 +35,7 @@ private:
 
 
 public:
-    PCDiskStorage(unsigned int storageSize, unsigned int blockSize);
+    PCDiskStorage(unsigned int storageSize, unsigned int sizeOfBlock);
 
     ~PCDiskStorage();
 
@@ -54,7 +54,7 @@ public:
     }
 
     unsigned int getblockSize(){
-        return blockSize;
+        return sizeOfBlock;
     }
 
     unsigned int getnumAllocatedRecords(){

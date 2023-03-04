@@ -5,8 +5,8 @@
 
 using namespace std;
 
-const int maxNumRecords = floor(blockSize/sizeof(Record));
-const int n = floor((blockSize - sizeof(int) - sizeof(int) - sizeof(int))/(sizeof(int) + sizeof(void *) + sizeof(void*)));
+const int maxNumRecords = floor(sizeOfBlock/sizeof(Record));
+const int n = floor((sizeOfBlock - sizeof(int) - sizeof(int) - sizeof(int))/(sizeof(void*) + sizeof(int) + sizeof(void *)));
 
 
 struct recordResults {
@@ -16,20 +16,19 @@ struct recordResults {
 };
 
 class BPlusNode {
-
     public: 
         bool isLeaf; 
         BPlusNode *ptrs[n + 1]; 
 
-        int keys[n], size; 
-        Record *blocks[n]; 
+        int keys[n], sizeNode; 
+        Record *dataBlocks[n]; 
 
         BPlusNode(bool);
 };
 
 BPlusNode::BPlusNode(bool toLeaf) {
     isLeaf = toLeaf;
-    size = 0;
+    sizeNode = 0;
 
     if (toLeaf == true) 
         ptrs[0] = NULL;
@@ -39,9 +38,9 @@ BPlusNode::BPlusNode(bool toLeaf) {
 class BPlusTree {
 
     private:
-        void deleteInternalNode(int, BPlusNode *, BPlusNode *);
         BPlusNode *getTheParent(BPlusNode *, BPlusNode *); 
-        void _insert(int *, Record *, BPlusNode *, BPlusNode**, bool *, bool *); 
+        void _insert(int *, Record *, BPlusNode *, BPlusNode**, bool *, bool *);
+        void deleteInternalNode(int, BPlusNode *, BPlusNode *);
             
 
     public:
@@ -75,12 +74,12 @@ std::pair<int, int> BPlusTree::findNumVotes(int x, recordResults ** results) {
         while (current->isLeaf == false) { 
             nodesNumAccess++;
 
-            for (int a=0; a<current->size; a++) {
+            for (int a=0; a<current->sizeNode; a++) {
                 if (x < current->keys[a]) {
                     current = current->ptrs[a]; 
                     break;
                 }
-                if (a == current->size-1) {
+                if (a == current->sizeNode-1) {
                     current = current->ptrs[a+1];
                     break;
                 }
@@ -90,12 +89,12 @@ std::pair<int, int> BPlusTree::findNumVotes(int x, recordResults ** results) {
         nodesNumAccess++;
         recordResults ** temp = results;
 
-        for (int a=0; a<current->size; a++) {
+        for (int a=0; a<current->sizeNode; a++) {
 
             if (x == current->keys[a]) {
 
                 bool foundlast = false;
-                Record * recordFollow = current->blocks[a];
+                Record * recordFollow = current->dataBlocks[a];
 
                 while(foundlast == false){
                     if (blocksNumAccess < 5){
@@ -155,12 +154,12 @@ std::pair<int, int> BPlusTree::findNumVotes(int min, int max, recordResults ** r
         while (current->isLeaf == false) { 
             nodesNumAccess++;
 
-            for (int a=0; a<current->size; a++) {
+            for (int a=0; a<current->sizeNode; a++) {
                 if (min < current->keys[a]) {
                     current = current->ptrs[a]; 
                     break;
                 }
-                if (a == current->size-1) {
+                if (a == current->sizeNode-1) {
                     current = current->ptrs[a+1]; 
                     break;
                 }
@@ -173,12 +172,12 @@ std::pair<int, int> BPlusTree::findNumVotes(int min, int max, recordResults ** r
 
         while (endFind == false){
         
-            for (int a=0; a<current->size; a++) {
+            for (int a=0; a<current->sizeNode; a++) {
 
                 if (min <= current->keys[a] && max >= current->keys[a]) {
                     int x = current->keys[a];
                     bool foundlast = false; 
-                    Record * follow = current->blocks[a];
+                    Record * follow = current->dataBlocks[a];
 
                     while(foundlast == false){
                         if (blocksNumAccess < 5){
@@ -251,7 +250,7 @@ int BPlusTree::NumNodesTree(BPlusNode *current, int &numNodes) {
     if (current != NULL) {
         numNodes++;
         if (current->isLeaf == false) { 
-            for (int i=0; i<current->size+1; i++) { 
+            for (int i=0; i<current->sizeNode+1; i++) { 
                 NumNodesTree(current->ptrs[i], numNodes); 
             }
         }
@@ -263,7 +262,7 @@ void BPlusTree::showRootNodes(BPlusNode *current) {
     cout << "The root nodes are: ";
 
     if (current != NULL) {
-        for (int i=0; i<current->size; i++) {
+        for (int i=0; i<current->sizeNode; i++) {
             cout << current->keys[i] << " ";
         }
         cout << "\n";
@@ -293,9 +292,9 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
     if (rootOfTree == NULL) {
         rootOfTree = new BPlusNode(true);
 
-        rootOfTree -> blocks[0] = block;
+        rootOfTree -> dataBlocks[0] = block;
         rootOfTree -> keys[0] = *newKey;
-        rootOfTree -> size = 1;
+        rootOfTree -> sizeNode = 1;
         return; 
     }
     if (curr->isLeaf == false && *internalN == false){
@@ -304,14 +303,14 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
         BPlusNode ** currentPtr = current->ptrs;
         int * currentKey = current->keys;
 
-        for (int a = 0; a < current -> size; a++) {
+        for (int a = 0; a < current -> sizeNode; a++) {
             if (*newKey < *currentKey){
                 current = *currentPtr;
                 break;
             }
             currentKey++;
             currentPtr++;
-            if (a == current->size - 1) { 
+            if (a == current->sizeNode - 1) { 
                 current = *currentPtr;
                 break;
             }
@@ -322,22 +321,13 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
     if (*insertingN == true && *internalN == false) {
         BPlusNode * current = curr;
         int * currentKey = current->keys;
-        Record ** currentBlock = current->blocks;
+        Record ** currentBlock = current->dataBlocks;
         Record * insertBlock = block;
         int insertKey = *newKey;
 
-        for (int a = 0; a < curr -> size; a++, currentKey++, currentBlock++) {
-            if (insertKey < *currentKey){ 
-                int tmpKey = *currentKey;
-                Record * temp_block = *currentBlock;
-                *currentKey = insertKey;
-                *currentBlock = insertBlock;
-                insertKey = tmpKey;
-                insertBlock = temp_block;
-            }
-
-            else if (insertKey == *currentKey){ 
-
+        for (int a = 0; a < curr -> sizeNode; a++, currentKey++, currentBlock++) {
+            if (insertKey == *currentKey){ 
+                
                 *insertingN = false;
                 Record * blockFollow = *currentBlock;
                 bool foundlast = false; 
@@ -367,12 +357,21 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
                 }
                 return;
             }
+
+            else if (insertKey < *currentKey ){ 
+                int tmpKey = *currentKey;
+                Record * temp_block = *currentBlock;
+                *currentKey = insertKey;
+                *currentBlock = insertBlock;
+                insertKey = tmpKey;
+                insertBlock = temp_block;
+            }
         }
 
-        if (curr->size < n){ 
+        if (curr->sizeNode < n){ 
             *currentKey = insertKey;
             *currentBlock = insertBlock;
-            current->size++;
+            current->sizeNode++;
             *insertingN = false;
         }
         else {
@@ -381,15 +380,15 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
 
             for (int i = halfMin, j = 0; i<n; i++, j++) {
                 newNode->keys[j] = current->keys[i];
-                newNode->blocks[j] = current->blocks[i];
-                newNode->size++;
-                current->size--;
+                newNode->dataBlocks[j] = current->dataBlocks[i];
+                newNode->sizeNode++;
+                current->sizeNode--;
             }
 
             int lastMin = floor((float) n/2);
             newNode-> keys[lastMin] = insertKey;
-            newNode-> blocks[lastMin] = insertBlock;
-            newNode->size++;
+            newNode-> dataBlocks[lastMin] = insertBlock;
+            newNode->sizeNode++;
             newNode->ptrs[0] = current->ptrs[0];
             current->ptrs[0] = newNode;
 
@@ -399,7 +398,7 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
 
             if (rootOfTree == curr){
                 BPlusNode * newroot = new BPlusNode(false);
-                newroot->size = 1;
+                newroot->sizeNode = 1;
                 newroot->keys[0] = *newKey;
                 newroot->ptrs[0] = curr;
                 newroot->ptrs[1] = newNode;
@@ -425,7 +424,7 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
         int keytoinsert = *newKey;
         BPlusNode * ptrtoinsert = *newPtr;
 
-        for (int i = 0; i < curr -> size; i++, currentKey++, currentPtr++) {
+        for (int i = 0; i < curr -> sizeNode; i++, currentKey++, currentPtr++) {
             if (keytoinsert < *currentKey){
                 int temp = *currentKey;
                 BPlusNode * temp_ptr = *currentPtr;
@@ -435,24 +434,24 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
                 ptrtoinsert = temp_ptr;
             }
         }
-        if (current->size < n){
+        if (current->sizeNode < n){
             *currentKey = keytoinsert;
             *currentPtr = ptrtoinsert;
             *insertingN = false;
-            current->size++;
+            current->sizeNode++;
         }
         else {
             int halfMin = ceil((float) n/2);
             BPlusNode * newNode = new BPlusNode(false);
 
             *newKey = current->keys[halfMin]; 
-            current->size--;
+            current->sizeNode--;
 
             for (int i = halfMin, j = 0; i<n; i++, j++){
                 if (i + 1 < n){
                     newNode->keys[j] = current->keys[i+1];
-                    current->size--;
-                    newNode->size++;
+                    current->sizeNode--;
+                    newNode->sizeNode++;
                 }
                 newNode->ptrs[j] = current->ptrs[i+1];
 
@@ -462,12 +461,12 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
             newNode -> keys[lastMin-1] = keytoinsert; 
             newNode -> ptrs[lastMin] = ptrtoinsert;
             *insertingN = true;
-            newNode -> size++; 
+            newNode -> sizeNode++; 
 
             *newPtr = newNode;
             if (rootOfTree == curr){
                 BPlusNode * newroot = new BPlusNode(false);
-                newroot->size = 1;
+                newroot->sizeNode = 1;
                 newroot->keys[0] = *newKey;
                 newroot->ptrs[0] = curr;
                 newroot->ptrs[1] = *newPtr;
@@ -495,7 +494,7 @@ void BPlusTree::deleteKey(int y) {
         int indexLeft, indexRight;
 
         while (current->isLeaf == false) {
-            for (int a=0; a<current->size; a++) {
+            for (int a=0; a<current->sizeNode; a++) {
                 parentOfCurrent = current;
                 indexRight = a + 1;
                 indexLeft = a - 1; 
@@ -503,7 +502,7 @@ void BPlusTree::deleteKey(int y) {
                     current = current->ptrs[a]; 
                     break;
                 }
-                if (a == current->size-1) {
+                if (a == current->sizeNode-1) {
                     indexLeft = a; 
                     indexRight = a + 2; 
                     current = current->ptrs[a+1];
@@ -513,7 +512,7 @@ void BPlusTree::deleteKey(int y) {
         }
         bool foundLast = false;
         int position;
-        for (position=0; position<current->size; position++) {
+        for (position=0; position<current->sizeNode; position++) {
             if (current->keys[position] == y) {
                 foundLast = true; 
                 break;
@@ -523,11 +522,11 @@ void BPlusTree::deleteKey(int y) {
             cout << "Key is not found\n";
             return;
         }
-        for (int a=position; a<current->size; a++) {
+        for (int a=position; a<current->sizeNode; a++) {
             current->keys[a] = current->keys[a+1];
         }
 
-        Record *followRecord = current->blocks[position];
+        Record *followRecord = current->dataBlocks[position];
         for (int i=0; i<maxNumRecords; i++) {
             Record *rec = &followRecord[i];
 
@@ -535,41 +534,41 @@ void BPlusTree::deleteKey(int y) {
                 rec->deleted = true;
             }
         }
-        current->size--;
+        current->sizeNode--;
 
         if (current == rootOfTree) {
             current->ptrs[0] = NULL;
-            if (current->size == 0) {
+            if (current->sizeNode == 0) {
                 cout << "BPlus tree doesn't exist\n";
                 rootOfTree = NULL;
             }
             return;
         }
-        if (current->size >= (n+1)/2) {
+        if (current->sizeNode >= (n+1)/2) {
             return;
         }
 
         if (indexLeft >= 0) { 
             BPlusNode *nodeLeft = parentOfCurrent->ptrs[indexLeft];
-            if (nodeLeft->size-1 >= (n+1)/2) { 
-                for (int i=current->size; i>0; i--) {
+            if (nodeLeft->sizeNode-1 >= (n+1)/2) { 
+                for (int i=current->sizeNode; i>0; i--) {
                     current->keys[i] = current->keys[i-1];
                 }
-                current->size++;
-                current->keys[0] = nodeLeft->keys[nodeLeft->size-1];
-                nodeLeft->size--;
+                current->sizeNode++;
+                current->keys[0] = nodeLeft->keys[nodeLeft->sizeNode-1];
+                nodeLeft->sizeNode--;
                 parentOfCurrent->keys[indexLeft] = current->keys[0];
                 return;
             }
         }
         
-        if (indexRight <= parentOfCurrent->size) { 
+        if (indexRight <= parentOfCurrent->sizeNode) { 
             BPlusNode *nodeRight = parentOfCurrent->ptrs[indexRight];
-            if (nodeRight->size-1 >= (n+1)/2) { 
-                current->size++;
-                current->keys[current->size-1] = nodeRight->keys[0];
-                nodeRight->size--;
-                for (int i=0; i<nodeRight->size; i++) {
+            if (nodeRight->sizeNode-1 >= (n+1)/2) { 
+                current->sizeNode++;
+                current->keys[current->sizeNode-1] = nodeRight->keys[0];
+                nodeRight->sizeNode--;
+                for (int i=0; i<nodeRight->sizeNode; i++) {
                     nodeRight->keys[i] = nodeRight->keys[i+1];
                 }
                 parentOfCurrent->keys[indexRight-1] = nodeRight->keys[0];
@@ -579,20 +578,20 @@ void BPlusTree::deleteKey(int y) {
 
         if (indexLeft >= 0) {
             BPlusNode *leftNode = parentOfCurrent->ptrs[indexLeft];
-            for (int i=leftNode->size, j=0; j<current->size; i++, j++) {
+            for (int i=leftNode->sizeNode, j=0; j<current->sizeNode; i++, j++) {
                 leftNode->keys[i] = current->keys[j];
             }
-            leftNode->size += current->size;
+            leftNode->sizeNode += current->sizeNode;
             leftNode->ptrs[0] = current->ptrs[0];
             deleteInternalNode(parentOfCurrent->keys[indexLeft], parentOfCurrent, current);
             
-        } else if (indexRight <= parentOfCurrent->size) {
+        } else if (indexRight <= parentOfCurrent->sizeNode) {
             BPlusNode *rightNode = parentOfCurrent->ptrs[indexRight];
             
-            for (int a=current->size, j=0; j<rightNode->size; a++, j++) {
+            for (int a=current->sizeNode, j=0; j<rightNode->sizeNode; a++, j++) {
                 current->keys[a] = rightNode->keys[j];
             }
-            current->size += rightNode->size;
+            current->sizeNode += rightNode->sizeNode;
             current->ptrs[0] = rightNode->ptrs[0];
             deleteInternalNode(parentOfCurrent->keys[indexRight-1], parentOfCurrent, rightNode);
         }
@@ -604,7 +603,7 @@ BPlusNode *BPlusTree::getTheParent(BPlusNode *current, BPlusNode* child) {
     if (current->isLeaf || current->ptrs[0]->isLeaf) { 
         return NULL;
     }
-    for (int a=0; a<current->size+1; a++) {
+    for (int a=0; a<current->sizeNode+1; a++) {
         if (current->ptrs[a] != child) {
             parentNode = getTheParent(current->ptrs[a], child);
             if (parentNode != NULL) {
@@ -620,7 +619,7 @@ BPlusNode *BPlusTree::getTheParent(BPlusNode *current, BPlusNode* child) {
 
 void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode *child) {
     if (current == rootOfTree) {
-        if (current->size == 1) {
+        if (current->sizeNode == 1) {
             if (current->ptrs[1] == child) { 
                 rootOfTree = current->ptrs[0];
                 return;
@@ -631,25 +630,25 @@ void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode 
         }
     }
     int ind;
-    for (ind=0; ind<current->size; ind++) {
+    for (ind=0; ind<current->sizeNode; ind++) {
         if (current->keys[ind] == keyParent) {
             break;
         }
     }
-    for (int i=ind; i<current->size; i++) {
+    for (int i=ind; i<current->sizeNode; i++) {
         current->keys[i] = current->keys[i+1];
     }
 
-    for (ind=0; ind<current->size+1; ind++) {
+    for (ind=0; ind<current->sizeNode+1; ind++) {
         if (current->ptrs[ind] == child) {
             break;
         }
     }
-    for (int i=ind; i<current->size+1; i++) {
+    for (int i=ind; i<current->sizeNode+1; i++) {
         current->ptrs[i] = current->ptrs[i+1];
     }
-    current->size--;
-    if (current->size >= n/2) {
+    current->sizeNode--;
+    if (current->sizeNode >= n/2) {
         return;
     }
     if (current == rootOfTree) {
@@ -659,7 +658,7 @@ void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode 
     BPlusNode *parentNode = getTheParent(rootOfTree, current);
 
     int indexLeft, indexRight;
-    for (ind=0; ind<parentNode->size+1; ind++) {
+    for (ind=0; ind<parentNode->sizeNode+1; ind++) {
         if (parentNode->ptrs[ind] == current) {
             indexRight = ind + 1;
             indexLeft = ind - 1;
@@ -669,74 +668,74 @@ void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode 
 
     if (indexLeft >= 0) { 
         BPlusNode *leftNode = parentNode->ptrs[indexLeft];
-        if (leftNode->size >= (n+1)/2) { 
-            for (int a=current->size; a>0; a--) {
+        if (leftNode->sizeNode >= (n+1)/2) { 
+            for (int a=current->sizeNode; a>0; a--) {
                 current->keys[a] = current->keys[a-1];
             }
             current->keys[0] = parentNode->keys[indexLeft];
-            parentNode->keys[indexLeft] = leftNode->keys[leftNode->size-1];
+            parentNode->keys[indexLeft] = leftNode->keys[leftNode->sizeNode-1];
 
-            for (int a=current->size+1; a>0; a--) {
+            for (int a=current->sizeNode+1; a>0; a--) {
                 current->ptrs[a] = current->ptrs[a-1];
             }
-            current->ptrs[0] = leftNode->ptrs[leftNode->size];
-            current->size++;
-            leftNode->size--;
+            current->ptrs[0] = leftNode->ptrs[leftNode->sizeNode];
+            current->sizeNode++;
+            leftNode->sizeNode--;
             return;
         }
     }
-    if (indexRight <= parentNode->size) { 
+    if (indexRight <= parentNode->sizeNode) { 
         BPlusNode *rightNode = parentNode->ptrs[indexRight]; 
-        if (rightNode->size >= (n+1)/2) { 
-            current->keys[current->size] = parentNode->keys[ind];
+        if (rightNode->sizeNode >= (n+1)/2) { 
+            current->keys[current->sizeNode] = parentNode->keys[ind];
             parentNode->keys[ind] = rightNode->keys[0];
-            for (int a=0; a<rightNode->size-1; a++) {
+            for (int a=0; a<rightNode->sizeNode-1; a++) {
                 rightNode->keys[a] = rightNode->keys[a+1];
             }
 
-            current->ptrs[current->size+1] = rightNode->ptrs[0];
-            for (int a=0; a<rightNode->size+1; a++) {
+            current->ptrs[current->sizeNode+1] = rightNode->ptrs[0];
+            for (int a=0; a<rightNode->sizeNode+1; a++) {
                 rightNode->ptrs[a] = rightNode->ptrs[a+1];
             }
 
-            current->size++;
-            rightNode->size--;
+            current->sizeNode++;
+            rightNode->sizeNode--;
             return;
         }
     }
 
-    if (indexRight <= parentNode->size) {
+    if (indexRight <= parentNode->sizeNode) {
         BPlusNode *rightNode = parentNode->ptrs[indexRight];
 
-        current->keys[current->size] = parentNode->keys[indexRight-1];
-        for (int i=current->size+1, j=0; j<rightNode->size; j++) {
+        current->keys[current->sizeNode] = parentNode->keys[indexRight-1];
+        for (int i=current->sizeNode+1, j=0; j<rightNode->sizeNode; j++) {
             current->keys[i] = rightNode->keys[j];
         }
 
-        for (int i=current->size+1, j=0; j<rightNode->size+1; j++) {
+        for (int i=current->sizeNode+1, j=0; j<rightNode->sizeNode+1; j++) {
             current->ptrs[i] = rightNode->ptrs[j]; 
             rightNode->ptrs[j] = NULL;
         }
 
-        current->size += rightNode->size + 1;
-        rightNode->size = 0;
+        current->sizeNode += rightNode->sizeNode + 1;
+        rightNode->sizeNode = 0;
 
         deleteInternalNode(parentNode->keys[indexRight-1], parentNode, rightNode);
 
     } else if (indexLeft >= 0) { 
 
         BPlusNode *leftNode = parentNode->ptrs[indexLeft];
-        leftNode->keys[leftNode->size] = parentNode->keys[indexLeft];
-        for (int a=leftNode->size+1, j=0; j<current->size; j++) {
+        leftNode->keys[leftNode->sizeNode] = parentNode->keys[indexLeft];
+        for (int a=leftNode->sizeNode+1, j=0; j<current->sizeNode; j++) {
             leftNode->keys[a] = current->keys[j];
         }
-        for (int a=leftNode->size+1, j=0; j<current->size+1; j++) {
+        for (int a=leftNode->sizeNode+1, j=0; j<current->sizeNode+1; j++) {
             leftNode->ptrs[a] = current->ptrs[j];
             current->ptrs[j] = NULL;
         }
 
-        leftNode->size += current->size + 1;
-        current->size = 0;
+        leftNode->sizeNode += current->sizeNode + 1;
+        current->sizeNode = 0;
         deleteInternalNode(parentNode->keys[indexLeft], parentNode, current);
     }
 };
