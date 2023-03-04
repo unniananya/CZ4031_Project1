@@ -17,7 +17,6 @@ PCDiskStorage::PCDiskStorage(unsigned int totalSize, unsigned int sizeOfBlock)
     this->numAllocatedBlocks = 0;    
     this->numAvailableBlocks = totalSize / sizeOfBlock;                  
     this->currentBlockSpaceUsed = 0;   
-
     
 }
 
@@ -109,7 +108,7 @@ tuple<void *, unsigned int> PCDiskStorage::allocateRecord(unsigned int recordSiz
     if ((numAllocatedBlocks == 0) || (recordSize > (sizeOfBlock - currentBlockSpaceUsed))) 
     {
         if (!allocateBlock())
-            throw "All the bloocks have been allocated and there is no more free space in the blocks.";
+            throw "All the blocks have been allocated and there is no more free space in the blocks.";
     }
 
     if (sizeOfBlock < recordSize)

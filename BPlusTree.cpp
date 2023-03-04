@@ -6,7 +6,7 @@
 using namespace std;
 
 const int maxNumRecords = floor(sizeOfBlock/sizeof(Record));
-const int n = floor((sizeOfBlock - sizeof(int) - sizeof(int) - sizeof(int))/(sizeof(void*) + sizeof(int) + sizeof(void *)));
+const int n = floor((sizeOfBlock - sizeof(int) - sizeof(int) - sizeof(void*))/(sizeof(void*) + sizeof(int) + sizeof(void *)));
 
 
 struct recordResults {
@@ -40,7 +40,7 @@ class BPlusTree {
     private:
         BPlusNode *getTheParent(BPlusNode *, BPlusNode *); 
         void _insert(int *, Record *, BPlusNode *, BPlusNode**, bool *, bool *);
-        void deleteInternalNode(int, BPlusNode *, BPlusNode *);
+        void deleteInternal(int, BPlusNode *, BPlusNode *);
             
 
     public:
@@ -583,7 +583,7 @@ void BPlusTree::deleteKey(int y) {
             }
             leftNode->sizeNode += current->sizeNode;
             leftNode->ptrs[0] = current->ptrs[0];
-            deleteInternalNode(parentOfCurrent->keys[indexLeft], parentOfCurrent, current);
+            deleteInternal(parentOfCurrent->keys[indexLeft], parentOfCurrent, current);
             
         } else if (indexRight <= parentOfCurrent->sizeNode) {
             BPlusNode *rightNode = parentOfCurrent->ptrs[indexRight];
@@ -593,7 +593,7 @@ void BPlusTree::deleteKey(int y) {
             }
             current->sizeNode += rightNode->sizeNode;
             current->ptrs[0] = rightNode->ptrs[0];
-            deleteInternalNode(parentOfCurrent->keys[indexRight-1], parentOfCurrent, rightNode);
+            deleteInternal(parentOfCurrent->keys[indexRight-1], parentOfCurrent, rightNode);
         }
     }
 }
@@ -617,7 +617,7 @@ BPlusNode *BPlusTree::getTheParent(BPlusNode *current, BPlusNode* child) {
     return parentNode;
 }
 
-void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode *child) {
+void BPlusTree::deleteInternal(int keyParent, BPlusNode *current, BPlusNode *child) {
     if (current == rootOfTree) {
         if (current->sizeNode == 1) {
             if (current->ptrs[1] == child) { 
@@ -720,7 +720,7 @@ void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode 
         current->sizeNode += rightNode->sizeNode + 1;
         rightNode->sizeNode = 0;
 
-        deleteInternalNode(parentNode->keys[indexRight-1], parentNode, rightNode);
+        deleteInternal(parentNode->keys[indexRight-1], parentNode, rightNode);
 
     } else if (indexLeft >= 0) { 
 
@@ -736,6 +736,6 @@ void BPlusTree::deleteInternalNode(int keyParent, BPlusNode *current, BPlusNode 
 
         leftNode->sizeNode += current->sizeNode + 1;
         current->sizeNode = 0;
-        deleteInternalNode(parentNode->keys[indexLeft], parentNode, current);
+        deleteInternal(parentNode->keys[indexLeft], parentNode, current);
     }
 };
