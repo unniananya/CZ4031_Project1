@@ -232,7 +232,7 @@ std::pair<int, int> BPlusTree::findNumVotes(int min, int max, recordResults ** r
 
 int BPlusTree::getLevelOfTree() {
     if (rootOfTree == NULL) {
-        cout << "The Tree is empty\n";
+        cout << "The Tree is empty" << endl;
         return 0;
     }
 
