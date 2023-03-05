@@ -85,7 +85,7 @@ int PCDiskStorage::searchNumVotesBetween(unsigned int minNumVotes, unsigned int 
 }
 
 
-int PCDiskStorage::deleteRecord(unsigned char *blockAddress, unsigned int offset, unsigned int recordSize)
+int PCDiskStorage::deleteARecord(unsigned char *blockAddress, unsigned int offset, unsigned int recordSize)
 try
 {
     fill(blockAddress + offset, blockAddress + offset + recordSize, '\0');
@@ -103,15 +103,15 @@ catch (exception &e)
 }
 
 
-tuple<void *, unsigned int> PCDiskStorage::allocateRecord(unsigned int recordSize)
+tuple<void *, unsigned int> PCDiskStorage::allocateARecord(unsigned int recordSize)
 {
     if ((numAllocatedBlocks == 0) || (recordSize > (sizeOfBlock - currentBlockSpaceUsed))) 
     {
-        if (!allocateBlock())
+        if (!allocateABlock())
             throw "All the blocks have been allocated and there is no more free space in the blocks.";
     }
 
-    if (sizeOfBlock < recordSize)
+    if (recordSize > sizeOfBlock)
     {
         throw "We are unable to allocate a record as the record size is biger than the size of the block.";
     }
@@ -126,26 +126,21 @@ tuple<void *, unsigned int> PCDiskStorage::allocateRecord(unsigned int recordSiz
     return recordAddress;
 }
 
-int PCDiskStorage::allocateBlock()
+
+int PCDiskStorage::allocateABlock()
 {
-    if (numAvailableBlocks > 0)
-    {
-        blockPtr = (numAllocatedBlocks * sizeOfBlock) + storagePtr; 
-        numAllocatedBlocks += 1;
-
-        blockList.push_back(blockPtr); 
-        numAvailableBlocks -= 1;
-        currentBlockSpaceUsed = 0;
-
-
-        cout << "Data block: " << numAllocatedBlocks << "" << endl;
-        return 1;
-    }
-
-    else
+    if (numAvailableBlocks <= 0)
     {
         cout << "Unsuccessful allocation" << endl;
         return 0;
     }
-}
 
+    blockPtr = (numAllocatedBlocks * sizeOfBlock) + storagePtr;
+    numAllocatedBlocks += 1;
+    blockList.push_back(blockPtr);
+    numAvailableBlocks -= 1;
+    currentBlockSpaceUsed = 0;
+
+    cout << "Data block: " << numAllocatedBlocks << "" << endl;
+    return 1;
+}

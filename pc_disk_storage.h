@@ -43,11 +43,11 @@ public:
 
     int searchNumVotesBetween(unsigned int minNumVotes, unsigned int maxNumVotes);
 
-    int deleteRecord(unsigned char *blockAddress, unsigned int offset, unsigned int recordSize);
+    int deleteARecord(unsigned char *blockAddress, unsigned int offset, unsigned int recordSize);
 
-    tuple<void *, unsigned int> allocateRecord(unsigned int recordSize);
+    tuple<void *, unsigned int> allocateARecord(unsigned int recordSize);
 
-    int allocateBlock();
+    int allocateABlock();
 
     unsigned int gettotalSize(){
         return totalSize;

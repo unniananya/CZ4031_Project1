@@ -40,7 +40,7 @@ int main(){
             stringstream linestream(line);
             getline(linestream, temp,'\t');
             linestream >> record.avgRating >> record.numVotes;
-            tuple<void *, uint> data_record = pcDiskStorage.allocateRecord(sizeof(record));
+            tuple<void *, uint> data_record = pcDiskStorage.allocateARecord(sizeof(record));
             data.push_back(data_record);
 
             void *rdAddr = (uchar *)get<0>(data_record) + get<1>(data_record);
@@ -143,7 +143,7 @@ int main(){
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
 
     int after = 0;
-    after = bplusTree.NumNodesTree(bplusTree.getRoot(), after);
+    after = bplusTree.NumNodesTree(bplusTree.getRoot(),after);
 
     cout << "No. of nodes in updated tree: " << after << "\n"; 
 

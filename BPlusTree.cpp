@@ -68,75 +68,75 @@ std::pair<int, int> BPlusTree::findNumVotes(int x, recordResults ** results) {
         cout << "This B plus tree is empty! \n";
         return std::make_pair(nodesNumAccess, blocksNumAccess);
 
-    } else {
+    }
 
-        BPlusNode *current = rootOfTree;
-        while (current->isLeaf == false) { 
-            nodesNumAccess++;
-
-            for (int a=0; a<current->sizeNode; a++) {
-                if (x < current->keys[a]) {
-                    current = current->ptrs[a]; 
-                    break;
-                }
-                if (a == current->sizeNode-1) {
-                    current = current->ptrs[a+1];
-                    break;
-                }
-            }
-        }
-
+    nodesNumAccess = 1;
+    BPlusNode *current = rootOfTree;
+    while (current->isLeaf == false) { 
         nodesNumAccess++;
-        recordResults ** temp = results;
 
         for (int a=0; a<current->sizeNode; a++) {
-
-            if (x == current->keys[a]) {
-
-                bool foundlast = false;
-                Record * recordFollow = current->dataBlocks[a];
-
-                while(foundlast == false){
-                    if (blocksNumAccess < 5){
-                        Record * blk = recordFollow;
-                        for (int j = 0; j < maxNumRecords; j++){
-                            Record * r = &recordFollow[j];
-                        }
-                    }
-                    blocksNumAccess++;
-
-                    for (int a = 0; a < maxNumRecords; a++){
-                        Record * r = &recordFollow[a];
-
-                        if (r->numVotes == x){
-                            
-                            *temp = new recordResults;
-                            (*temp)->record = *r;
-                            temp = &((*temp)->nextRecord);
-
-                            if (r->nextDuplicate == 0){
-                                foundlast = true;
-                                break;
-                            }
-
-                            else if (r->nextDuplicate == recordFollow){
-                                continue;
-                            }
-
-                            else {
-                                recordFollow = r->nextDuplicate;
-                                break;
-                            }
-                            
-                        }
-                    }
-                }
-                return std::make_pair(nodesNumAccess, blocksNumAccess);
+            if (x < current->keys[a]) {
+                current = current->ptrs[a]; 
+                break;
+            }
+            if (a == current->sizeNode-1) {
+                current = current->ptrs[a+1];
+                break;
             }
         }
-        cout << "The Key is not found\n";
-        return std::make_pair(nodesNumAccess, blocksNumAccess);
     }
+
+    recordResults ** temp = results;
+
+    for (int a=0; a<current->sizeNode; a++) {
+
+        if (x == current->keys[a]) {
+
+            bool foundlast = false;
+            Record * recordFollow = current->dataBlocks[a];
+
+            while(foundlast == false){
+                if (blocksNumAccess < 5){
+                    Record * blk = recordFollow;
+                    for (int j = 0; j < maxNumRecords; j++){
+                        Record * r = &recordFollow[j];
+                    }
+                }
+                blocksNumAccess++;
+
+                for (int a = 0; a < maxNumRecords; a++){
+                    Record * r = &recordFollow[a];
+
+                    if (r->numVotes == x){
+                        
+                        *temp = new recordResults;
+                        (*temp)->record = *r;
+                        temp = &((*temp)->nextRecord);
+
+                        if (r->nextDuplicate == 0){
+                            foundlast = true;
+                            break;
+                        }
+
+                        else if (r->nextDuplicate == recordFollow){
+                            continue;
+                        }
+
+                        else {
+                            recordFollow = r->nextDuplicate;
+                            break;
+                        }
+                        
+                    }
+                }
+            }
+            return std::make_pair(nodesNumAccess, blocksNumAccess);
+        }
+    }
+    cout << "The Key is not found" << endl;
+    return std::make_pair(nodesNumAccess, blocksNumAccess);
+    
 };
 
 
@@ -145,7 +145,7 @@ std::pair<int, int> BPlusTree::findNumVotes(int min, int max, recordResults ** r
     int blocksNumAccess = 0;
 
     if (rootOfTree == NULL) {
-        cout << "Tree is empty\n";
+        cout << "Tree is empty" << endl;
         return std::make_pair(nodesNumAccess, blocksNumAccess);
 
     } else {
@@ -231,17 +231,16 @@ std::pair<int, int> BPlusTree::findNumVotes(int min, int max, recordResults ** r
 };
 
 int BPlusTree::getLevelOfTree() {
-    int level = 1;
-    
     if (rootOfTree == NULL) {
         cout << "The Tree is empty\n";
         return 0;
-    } else {
-        BPlusNode *current = rootOfTree;
-        while (current->isLeaf == false) {
-            current = current->ptrs[0];
-            level++;
-        }
+    }
+
+    int level = 1;
+    BPlusNode *current = rootOfTree;
+    while (!current->isLeaf) {
+        current = current->ptrs[0];
+        level++;
     }
     return level;
 }
@@ -265,7 +264,7 @@ void BPlusTree::showRootNodes(BPlusNode *current) {
         for (int i=0; i<current->sizeNode; i++) {
             cout << current->keys[i] << " ";
         }
-        cout << "\n";
+        cout << endl;
     }
 }
 
@@ -281,8 +280,8 @@ void BPlusTree::insertv1(int key, Record * dataBlock) {
     bool internalNode = false; 
     bool insertingNode = true;
 
-    bool * internalN = &internalNode;
     bool * insertingN = &insertingNode;
+    bool * internalN = &internalNode;
 
     insertv2(newKey, dataBlock, rootOfTree, newPtr, internalN, insertingN);
 
@@ -291,10 +290,9 @@ void BPlusTree::insertv1(int key, Record * dataBlock) {
 void BPlusTree::insertv2(int * newKey, Record * block, BPlusNode * curr, BPlusNode ** newPtr, bool * internalN, bool * insertingN) {
     if (rootOfTree == NULL) {
         rootOfTree = new BPlusNode(true);
-
-        rootOfTree -> dataBlocks[0] = block;
-        rootOfTree -> keys[0] = *newKey;
         rootOfTree -> sizeNode = 1;
+        rootOfTree -> keys[0] = *newKey;
+        rootOfTree -> dataBlocks[0] = block;
         return; 
     }
     if (curr->isLeaf == false && *internalN == false){
@@ -308,8 +306,10 @@ void BPlusTree::insertv2(int * newKey, Record * block, BPlusNode * curr, BPlusNo
                 current = *currentPtr;
                 break;
             }
-            currentKey++;
+
             currentPtr++;
+            currentKey++;
+
             if (a == current->sizeNode - 1) { 
                 current = *currentPtr;
                 break;
@@ -362,15 +362,17 @@ void BPlusTree::insertv2(int * newKey, Record * block, BPlusNode * curr, BPlusNo
                 int tmpKey = *currentKey;
                 Record * temp_block = *currentBlock;
                 *currentKey = insertKey;
-                *currentBlock = insertBlock;
                 insertKey = tmpKey;
+                *currentBlock = insertBlock;
                 insertBlock = temp_block;
+
             }
         }
 
         if (curr->sizeNode < n){ 
-            *currentKey = insertKey;
             *currentBlock = insertBlock;
+            *currentKey = insertKey;
+
             current->sizeNode++;
             *insertingN = false;
         }
@@ -398,12 +400,11 @@ void BPlusTree::insertv2(int * newKey, Record * block, BPlusNode * curr, BPlusNo
 
             if (rootOfTree == curr){
                 BPlusNode * newroot = new BPlusNode(false);
+                newroot->isLeaf = false;
                 newroot->sizeNode = 1;
-                newroot->keys[0] = *newKey;
                 newroot->ptrs[0] = curr;
                 newroot->ptrs[1] = newNode;
-                newroot->isLeaf = false;
-
+                newroot->keys[0] = *newKey;
                 rootOfTree = newroot;
             }
             
@@ -486,7 +487,7 @@ void BPlusTree::insertv2(int * newKey, Record * block, BPlusNode * curr, BPlusNo
 
 void BPlusTree::deleteKey(int y) {
     if (rootOfTree == NULL) {
-        cout << "Tree is empty\n";
+        cout << "Tree is empty" << endl;
         return;
     } else {
         BPlusNode *parentOfCurrent;
@@ -495,9 +496,10 @@ void BPlusTree::deleteKey(int y) {
 
         while (current->isLeaf == false) {
             for (int a=0; a<current->sizeNode; a++) {
-                parentOfCurrent = current;
-                indexRight = a + 1;
                 indexLeft = a - 1; 
+                indexRight = a + 1;
+                parentOfCurrent = current;
+
                 if (y < current->keys[a]) {
                     current = current->ptrs[a]; 
                     break;
@@ -519,7 +521,7 @@ void BPlusTree::deleteKey(int y) {
             }
         }
         if (!foundLast) {
-            cout << "Key is not found\n";
+            cout << "Key is not found" << endl;
             return;
         }
         for (int a=position; a<current->sizeNode; a++) {
@@ -539,7 +541,7 @@ void BPlusTree::deleteKey(int y) {
         if (current == rootOfTree) {
             current->ptrs[0] = NULL;
             if (current->sizeNode == 0) {
-                cout << "BPlus tree doesn't exist\n";
+                cout << "BPlus tree doesn't exist" << endl;
                 rootOfTree = NULL;
             }
             return;
@@ -660,8 +662,9 @@ void BPlusTree::deleteInternal(int keyParent, BPlusNode *current, BPlusNode *chi
     int indexLeft, indexRight;
     for (ind=0; ind<parentNode->sizeNode+1; ind++) {
         if (parentNode->ptrs[ind] == current) {
-            indexRight = ind + 1;
             indexLeft = ind - 1;
+            indexRight = ind + 1;
+
             break;
         }
     }
@@ -679,8 +682,8 @@ void BPlusTree::deleteInternal(int keyParent, BPlusNode *current, BPlusNode *chi
                 current->ptrs[a] = current->ptrs[a-1];
             }
             current->ptrs[0] = leftNode->ptrs[leftNode->sizeNode];
-            current->sizeNode++;
             leftNode->sizeNode--;
+            current->sizeNode++;
             return;
         }
     }
@@ -698,8 +701,9 @@ void BPlusTree::deleteInternal(int keyParent, BPlusNode *current, BPlusNode *chi
                 rightNode->ptrs[a] = rightNode->ptrs[a+1];
             }
 
-            current->sizeNode++;
             rightNode->sizeNode--;
+            current->sizeNode++;
+
             return;
         }
     }
