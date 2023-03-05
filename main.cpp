@@ -46,7 +46,7 @@ int main(){
             void *rdAddr = (uchar *)get<0>(data_record) + get<1>(data_record);
             memcpy(rdAddr, &record, sizeof(record));
 
-            bplusTree.insert(record.numVotes, (Record *) get<0>(data_record));
+            bplusTree.insertv1(record.numVotes, (Record *) get<0>(data_record));
         }
         dataFile.close();
     }

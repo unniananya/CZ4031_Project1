@@ -39,7 +39,7 @@ class BPlusTree {
 
     private:
         BPlusNode *getTheParent(BPlusNode *, BPlusNode *); 
-        void _insert(int *, Record *, BPlusNode *, BPlusNode**, bool *, bool *);
+        void insertv2(int *, Record *, BPlusNode *, BPlusNode**, bool *, bool *);
         void deleteInternal(int, BPlusNode *, BPlusNode *);
             
 
@@ -51,7 +51,7 @@ class BPlusTree {
         std::pair<int, int> findNumVotes(int, int, recordResults **);    
         BPlusNode * getRoot();
         int getLevelOfTree();
-        void insert(int, Record *);
+        void insertv1(int, Record *);
         void deleteKey(int);
         int NumNodesTree(BPlusNode *, int &);
 };
@@ -273,7 +273,7 @@ BPlusNode *BPlusTree::getRoot() {
     return rootOfTree;
 }
 
-void BPlusTree::insert(int key, Record * dataBlock) {
+void BPlusTree::insertv1(int key, Record * dataBlock) {
     int * newKey = &key;
     
     BPlusNode * tmpPtr = NULL;
@@ -284,11 +284,11 @@ void BPlusTree::insert(int key, Record * dataBlock) {
     bool * internalN = &internalNode;
     bool * insertingN = &insertingNode;
 
-    _insert(newKey, dataBlock, rootOfTree, newPtr, internalN, insertingN);
+    insertv2(newKey, dataBlock, rootOfTree, newPtr, internalN, insertingN);
 
 }
 
-void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNode ** newPtr, bool * internalN, bool * insertingN) {
+void BPlusTree::insertv2(int * newKey, Record * block, BPlusNode * curr, BPlusNode ** newPtr, bool * internalN, bool * insertingN) {
     if (rootOfTree == NULL) {
         rootOfTree = new BPlusNode(true);
 
@@ -315,7 +315,7 @@ void BPlusTree::_insert(int * newKey, Record * block, BPlusNode * curr, BPlusNod
                 break;
             }
         }
-        _insert(newKey, block, current, newPtr, internalN, insertingN);
+        insertv2(newKey, block, current, newPtr, internalN, insertingN);
     }
 
     if (*insertingN == true && *internalN == false) {
